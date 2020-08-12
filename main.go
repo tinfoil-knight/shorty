@@ -1,5 +1,8 @@
 package shorty
 
+import "github.com/tinfoil-knight/shorty/config"
+
 func main() {
-	// Code goes here
+	httpPort := config.Get("PORT")
+
 }
