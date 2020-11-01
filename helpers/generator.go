@@ -6,7 +6,7 @@ import (
 )
 
 // GenerateShortString : Creates a short string of alphanumeric characters.
-func GenerateShortString() string {
+func GenerateShortString() []byte {
 	const base62Corpus = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	rand.Seed(time.Now().UnixNano())
 	var short []byte
@@ -14,5 +14,5 @@ func GenerateShortString() string {
 	for i := 0; i < 6; i++ {
 		short[i] = base62Corpus[rand.Intn(len(base62Corpus))]
 	}
-	return string(short)
+	return short
 }

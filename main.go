@@ -29,15 +29,23 @@ func (app *application) apiHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		body, err := ioutil.ReadAll(r.Body)
-		url := string(body)
+		url := body
 		shortCode := helpers.GenerateShortString()
 		err = app.db.Update(func(tx *bolt.Tx) error {
 			b, err := tx.CreateBucketIfNotExists(bucket)
 			if err != nil {
 				return err
 			}
-			// TODO: Check if a value with the same code exists first
-			return b.Put([]byte(shortCode), []byte(url))
+			// TODO: Protect against crash/infinite loop by limiting num of iterations
+			// TODO: Test this loop
+			for {
+				chk := b.Get(shortCode)
+				if chk == nil {
+					break
+				}
+				shortCode = helpers.GenerateShortString()
+			}
+			return b.Put(shortCode, url)
 		})
 		if err != nil {
 			sendError(w, http.StatusInternalServerError)
@@ -58,10 +66,13 @@ func (app *application) apiHandler(w http.ResponseWriter, r *http.Request) {
 		err = app.db.View(func(tx *bolt.Tx) error {
 			b := tx.Bucket(bucket)
 			url := b.Get([]byte(shortCode))
-			fmt.Fprintf(w, "%s\n", url)
+			if url != nil {
+				fmt.Fprintf(w, "%s\n", url)
+			} else {
+				sendError(w, http.StatusBadRequest)
+			}
 			return nil
 		})
-		// TODO: Check if some url was returned or not
 		if err != nil {
 			sendError(w, http.StatusInternalServerError)
 		}
