@@ -3,6 +3,7 @@ module github.com/tinfoil-knight/shorty
 go 1.14
 
 require (
+	github.com/boltdb/bolt v1.3.1
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/leodido/go-urn v1.2.0 // indirect
