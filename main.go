@@ -14,9 +14,11 @@ import (
 	"github.com/go-playground/validator"
 )
 
-var db *bolt.DB
+type application struct {
+	db *bolt.DB
+}
 
-func apiHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) apiHandler(w http.ResponseWriter, r *http.Request) {
 
 	bucket := []byte("links")
 	var validate *validator.Validate
@@ -29,7 +31,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		url := string(body)
 		shortCode := helpers.GenerateShortString()
-		err = db.Update(func(tx *bolt.Tx) error {
+		err = app.db.Update(func(tx *bolt.Tx) error {
 			b, err := tx.CreateBucketIfNotExists(bucket)
 			if err != nil {
 				return err
@@ -53,12 +55,13 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			sendError(w, http.StatusBadRequest)
 		}
-		err = db.View(func(tx *bolt.Tx) error {
+		err = app.db.View(func(tx *bolt.Tx) error {
 			b := tx.Bucket(bucket)
 			url := b.Get([]byte(shortCode))
 			fmt.Fprintf(w, "%s\n", url)
 			return nil
 		})
+		// TODO: Check if some url was returned or not
 		if err != nil {
 			sendError(w, http.StatusInternalServerError)
 		}
@@ -82,11 +85,15 @@ func main() {
 	httpPort := config.Get("PORT")
 	boltPath := config.Get("BOLT-PATH")
 
-	db = helpers.InitDB(boltPath)
+	db := helpers.InitDB(boltPath)
 	defer db.Close()
 
+	app := &application{
+		db: db,
+	}
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", apiHandler)
+	mux.HandleFunc("/", app.apiHandler)
 
 	log.Printf("INFO: Starting server on %s", httpPort)
 	log.Fatal(http.ListenAndServe(httpPort, logRequest(mux)))
