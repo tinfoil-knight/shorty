@@ -21,13 +21,13 @@ type application struct {
 }
 
 func (app *application) getHandler(w http.ResponseWriter, r *http.Request) {
-	var validate *validator.Validate
-	validate = validator.New()
-
 	if r.Method != "GET" {
 		sendError(w, http.StatusMethodNotAllowed)
 		return
 	}
+	var validate *validator.Validate
+	validate = validator.New()
+
 	shortCode := []byte(r.URL.Path[1:])
 
 	err := validate.Var(string(shortCode), "required,alphanum,len=6")
@@ -59,22 +59,35 @@ func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
 		sendError(w, http.StatusMethodNotAllowed)
 		return
 	}
-	body, err := ioutil.ReadAll(r.Body)
-	url := body
+	var validate *validator.Validate
+	validate = validator.New()
+	url, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError)
+		return
+	}
+	err = validate.Var(string(url), "url")
+	if err != nil {
+		sendError(w, http.StatusBadRequest)
+		return
+	}
 	shortCode := helpers.GenerateShortString()
 	err = app.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists(app.bucket)
 		if err != nil {
 			return err
 		}
-		// TODO: Protect against crash/infinite loop by limiting num of iterations
 		// TODO: Test this loop
-		for {
+		for i := 0; i < 5; i++ {
+			if i == 4 {
+				return errors.New("not able to generate unique code")
+			}
 			chk := b.Get(shortCode)
 			if chk == nil {
 				break
 			}
 			shortCode = helpers.GenerateShortString()
+
 		}
 		return b.Put(shortCode, url)
 	})

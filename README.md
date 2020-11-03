@@ -7,6 +7,10 @@ Shorty is a simple URL shortening service. It uses a key-value store and has no 
 
 ## Getting Started
 
+### Development
+
+### Usage
+
 ## Author
 Kunal Kundu [@tinfoil-knight](https://github.com/tinfoil-knight)
 
