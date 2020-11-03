@@ -61,6 +61,7 @@ func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var validate *validator.Validate
 	validate = validator.New()
+
 	url, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError)
@@ -87,7 +88,6 @@ func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			shortCode = helpers.GenerateShortString()
-
 		}
 		return b.Put(shortCode, url)
 	})
