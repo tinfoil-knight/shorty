@@ -1,3 +1,4 @@
 PORT: :8080
 BASE-URL: ''
 BOLT-PATH: 'admin.db'
+TEST-BOLT-PATH: 'test.db'

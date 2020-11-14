@@ -1,8 +1,8 @@
 FROM golang:1.15-alpine AS builder
 WORKDIR /build
-# Prevent the resulting binary from being linked to any C libs.
-ENV CGO_ENABLED=0
-ENV GO111MODULE=on \
+# CGO_ENABLED: Prevent the resulting binary from being linked to any C libs.
+ENV CGO_ENABLED=0 \
+    GO111MODULE=on \
     GOOS=linux \
     GOARCH=amd64
 # Copy go.mod, go.sum and download deps
