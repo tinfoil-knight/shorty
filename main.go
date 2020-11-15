@@ -35,23 +35,16 @@ func (app *application) getHandler(w http.ResponseWriter, r *http.Request) {
 		sendError(w, http.StatusBadRequest)
 		return
 	}
-	err = app.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(app.bucket)
-		url := b.Get([]byte(shortCode))
-		if url != nil {
-			fmt.Fprintf(w, "%s", url)
-		} else {
-			return errors.New("Not Found")
-		}
-		return nil
-	})
+	url, err := app.findOne(shortCode)
 	if err != nil {
 		if err.Error() == "Not Found" {
 			sendError(w, http.StatusNotFound)
 		} else {
 			sendError(w, http.StatusInternalServerError)
 		}
+		return
 	}
+	fmt.Fprintf(w, "%s", url)
 }
 
 func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +100,19 @@ func logRequest(handler http.Handler) http.Handler {
 		handler.ServeHTTP(w, r)
 		log.Printf("%s %s %s\n", r.Method, r.URL, time.Since(start).Round(time.Microsecond).String())
 	})
+}
+
+func (app *application) findOne(key []byte) ([]byte, error) {
+	var val []byte
+	err := app.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(app.bucket)
+		val = b.Get([]byte(key))
+		if val == nil {
+			return errors.New("Not Found")
+		}
+		return nil
+	})
+	return val, err
 }
 
 func main() {
