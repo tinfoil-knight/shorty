@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/boltdb/bolt"
@@ -53,6 +55,33 @@ func getApplication() *application {
 		bucket: bktName,
 	}
 	return app
+}
+
+// loadSitesInDB : Loads websites from a text file in the given bolt bucket with short codes as keys
+// Returns a list of websites it loaded
+func (app *application) loadSitesInDB() []string {
+	file, err := os.Open("./testdata/sitelst.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	var lst []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		url := "https://" + scanner.Text()
+		lst = append(lst, url)
+		_, err := app.addAShortCode([]byte(url))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if err = scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return lst
 }
 
 func Benchmark__GetWebsite(b *testing.B) {
