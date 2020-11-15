@@ -65,27 +65,10 @@ func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
 		sendError(w, http.StatusBadRequest)
 		return
 	}
-	shortCode := helpers.GenerateShortString()
-	err = app.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists(app.bucket)
-		if err != nil {
-			return err
-		}
-		// TODO: Test this loop
-		for i := 0; i < 5; i++ {
-			if i == 4 {
-				return errors.New("not able to generate unique code")
-			}
-			chk := b.Get(shortCode)
-			if chk == nil {
-				break
-			}
-			shortCode = helpers.GenerateShortString()
-		}
-		return b.Put(shortCode, url)
-	})
+	shortCode, err := app.addAShortCode(url)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError)
+		return
 	}
 	fmt.Fprintf(w, "%s", shortCode)
 }
@@ -113,6 +96,40 @@ func (app *application) findOne(key []byte) ([]byte, error) {
 		return nil
 	})
 	return val, err
+}
+
+func (app *application) addOne(key []byte, val []byte) error {
+	err := app.db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists(app.bucket)
+		if err != nil {
+			return err
+		}
+		return b.Put(key, val)
+	})
+	return err
+}
+
+func (app *application) addAShortCode(url []byte) ([]byte, error) {
+	shortCode := helpers.GenerateShortString()
+	err := app.db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists(app.bucket)
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < 5; i++ {
+			if i == 4 {
+				return errors.New("not able to generate unique code")
+			}
+			chk := b.Get(shortCode)
+			if chk == nil {
+				break
+			}
+			shortCode = helpers.GenerateShortString()
+		}
+		return b.Put(shortCode, url)
+	})
+	return shortCode, err
 }
 
 func main() {
