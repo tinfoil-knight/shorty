@@ -12,7 +12,7 @@ RUN go mod download
 # Copy the source code
 COPY . .
 # Build the application
-RUN go build -o main .
+RUN go build -o bin/main .
 
 # Build a small image
 FROM scratch

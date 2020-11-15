@@ -39,7 +39,7 @@ func (app *application) getHandler(w http.ResponseWriter, r *http.Request) {
 		b := tx.Bucket(app.bucket)
 		url := b.Get([]byte(shortCode))
 		if url != nil {
-			fmt.Fprintf(w, "%s\n", url)
+			fmt.Fprintf(w, "%s", url)
 		} else {
 			return errors.New("Not Found")
 		}
@@ -94,7 +94,7 @@ func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sendError(w, http.StatusInternalServerError)
 	}
-	fmt.Fprintf(w, "%s\n", shortCode)
+	fmt.Fprintf(w, "%s", shortCode)
 }
 
 func sendError(w http.ResponseWriter, statusCode int) {

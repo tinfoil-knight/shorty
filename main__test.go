@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,10 @@ import (
 	"github.com/tinfoil-knight/shorty/helpers"
 )
 
+var bktName = []byte("links")
+var tstLink = []byte("https://example.com")
+var tstCode = []byte("1asdUv")
+
 func runServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(fn))
 }
@@ -21,20 +26,19 @@ func getApplication() *application {
 	db := helpers.InitDB(boltPath)
 
 	err := db.Update(func(tx *bolt.Tx) error {
-		err := tx.DeleteBucket([]byte("links"))
+		err := tx.DeleteBucket(bktName)
 		if err != nil {
 			if err.Error() == "bucket not found" {
 				fmt.Println("No test bucket found at", boltPath)
 			} else {
 				return fmt.Errorf("delete bucket: %s", err)
 			}
-
 		}
-		b, err := tx.CreateBucket([]byte("links"))
+		b, err := tx.CreateBucket(bktName)
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
-		err = b.Put([]byte("1asdUv"), []byte("https://example.com"))
+		err = b.Put(tstCode, tstLink)
 		if err != nil {
 			return fmt.Errorf("store key in bucket: %s", err)
 		}
@@ -47,13 +51,9 @@ func getApplication() *application {
 
 	app := &application{
 		db:     db,
-		bucket: []byte("links"),
+		bucket: bktName,
 	}
 	return app
-}
-
-func initDB() {
-
 }
 
 func Benchmark__GetWebsite(b *testing.B) {
@@ -69,8 +69,27 @@ func Test__GetWebsite(t *testing.T) {
 	defer app.db.Close()
 
 	ts := runServer(app.getHandler)
+	defer ts.Close()
 
-	ts.Close()
+	url := ts.URL + "/" + string(tstCode)
+
+	res, err := http.Get(url)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("HTTPStatusCode | Expected: %v, Received: %v", http.StatusOK, res.StatusCode)
+	}
+
+	defer res.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	if string(bodyBytes) != string(tstLink) {
+		t.Errorf("ResponseBody | Expected: %v, Received: %v", string(bodyBytes), string(tstLink))
+	}
 }
 
 func Test__SetWebsite(t *testing.T) {
