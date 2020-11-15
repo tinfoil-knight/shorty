@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -68,7 +67,7 @@ func Test__GetWebsite(t *testing.T) {
 	app := getApplication()
 	defer app.db.Close()
 
-	ts := runServer(app.getHandler)
+	ts := runServer(app.redirectHandler)
 	defer ts.Close()
 
 	url := ts.URL + "/" + string(tstCode)
@@ -78,17 +77,11 @@ func Test__GetWebsite(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 	if res.StatusCode != http.StatusOK {
-		t.Errorf("HTTPStatusCode | Expected: %v, Received: %v", http.StatusOK, res.StatusCode)
+		t.Errorf("HTTPStatusCode | Expected: %v ; Received: %v", http.StatusOK, res.StatusCode)
 	}
-
-	defer res.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Errorf("%s", err)
-	}
-
-	if string(bodyBytes) != string(tstLink) {
-		t.Errorf("ResponseBody | Expected: %v, Received: %v", string(bodyBytes), string(tstLink))
+	finalURL := res.Request.URL.String()
+	if finalURL != string(tstLink) {
+		t.Errorf("RequestURL | Expected: %s ; Received: %s", tstLink, finalURL)
 	}
 }
 

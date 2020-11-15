@@ -20,7 +20,7 @@ type application struct {
 	bucket []byte
 }
 
-func (app *application) getHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) redirectHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		sendError(w, http.StatusMethodNotAllowed)
 		return
@@ -44,7 +44,7 @@ func (app *application) getHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	fmt.Fprintf(w, "%s", url)
+	http.Redirect(w, r, string(url), 302)
 }
 
 func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
@@ -146,8 +146,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/new", app.setHandler)
-	mux.HandleFunc("/", app.getHandler)
+	mux.HandleFunc("/app/new", app.setHandler)
+	mux.HandleFunc("/", app.redirectHandler)
 
 	log.Printf("INFO: Starting server on %s", httpPort)
 	log.Fatal(http.ListenAndServe(httpPort, logRequest(mux)))
