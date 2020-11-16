@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/boltdb/bolt"
+	"github.com/go-playground/validator"
 	"github.com/tinfoil-knight/shorty/config"
 	"github.com/tinfoil-knight/shorty/helpers"
 )
@@ -115,7 +118,28 @@ func Test__GetWebsite(t *testing.T) {
 }
 
 func Test__SetWebsite(t *testing.T) {
+	app := getApplication()
+	defer app.db.Close()
 
+	ts := runServer(app.setHandler)
+	defer ts.Close()
+
+	url := ts.URL
+
+	res, err := http.Post(url, "application/x-www-form-urlencoded", bytes.NewReader(tstLink))
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	if res.StatusCode != http.StatusCreated {
+		t.Errorf("HTTPStatusCode | Expected: %v ; Received: %v", http.StatusCreated, res.StatusCode)
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	validate := validator.New()
+	err = validate.Var(string(string(body)), "required,alphanum,len=6")
+	if err != nil {
+		t.Errorf("ResponseBody | Validation: Alphanumeric 6 Character ; Received: %s", body)
+	}
 }
 
 func Test__SetInvalidURL(t *testing.T) {

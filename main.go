@@ -25,8 +25,7 @@ func (app *application) redirectHandler(w http.ResponseWriter, r *http.Request) 
 		sendError(w, http.StatusMethodNotAllowed)
 		return
 	}
-	var validate *validator.Validate
-	validate = validator.New()
+	validate := validator.New()
 
 	shortCode := []byte(r.URL.Path[1:])
 
@@ -70,6 +69,7 @@ func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
 		sendError(w, http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "%s", shortCode)
 }
 
