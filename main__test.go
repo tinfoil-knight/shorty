@@ -135,6 +135,9 @@ func Test__SetWebsite(t *testing.T) {
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
 	validate := validator.New()
 	err = validate.Var(string(string(body)), "required,alphanum,len=6")
 	if err != nil {

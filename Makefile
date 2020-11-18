@@ -6,6 +6,9 @@ run:
 build:
 	go build -o bin/main .
 
+format:
+	gofmt -d -e
+
 test:
 	go test -v
 
