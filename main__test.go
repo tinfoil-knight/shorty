@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -63,37 +65,70 @@ func getApplication() *application {
 // loadSitesInDB : Loads websites from a text file in the given bolt bucket with short codes as keys
 // Returns a list of websites it loaded
 func (app *application) loadSitesInDB() []string {
-	file, err := os.Open("./testdata/sitelst.txt")
+	file, err := os.Open("./test/sitelst.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	var lst []string
+	var shortCodes []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		url := "https://" + scanner.Text()
-		lst = append(lst, url)
-		_, err := app.addAShortCode([]byte(url))
+
+		shortCode, err := app.addAShortCode([]byte(url))
 		if err != nil {
 			log.Fatal(err)
 		}
+		shortCodes = append(shortCodes, string(shortCode))
 	}
 
 	if err = scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
 
-	return lst
+	return shortCodes
+}
+
+func checkWebsite(url string) (string, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		panic(err)
+	}
+	client := new(http.Client)
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return errors.New("Redirect")
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		if res.StatusCode == http.StatusFound {
+			finalURL, _ := res.Location()
+			return string(finalURL.String()), nil
+		}
+		return "", err
+	}
+	return "", nil
 }
 
 func Benchmark__GetWebsite(b *testing.B) {
+	app := getApplication()
+	defer app.db.Close()
 
+	ts := runServer(app.redirectHandler)
+	defer ts.Close()
+
+	urls := app.loadSitesInDB()
+
+	for i := 0; i < b.N; i++ {
+		url := ts.URL + "/" + urls[rand.Intn(len(urls))]
+		checkWebsite(url)
+	}
 }
 
-func Benchmark__SetWebsite(b *testing.B) {
+// func Benchmark__SetWebsite(b *testing.B) {
 
-}
+// }
 
 func Test__GetWebsite(t *testing.T) {
 	app := getApplication()
