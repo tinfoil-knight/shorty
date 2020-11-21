@@ -11,9 +11,19 @@ Shorty is a simple URL shortening service. It uses a key-value store and has no 
 
 ## Getting Started
 
+If you don't have `make` installed, you can just refer the `Makefile` and run the specified scripts.
+
 ### Development
+- Run the server: `go run main.go`
+- Running Tests: `make test`
 
 ### Usage
+- Build the app from source: `make build`
+- Place a `config.yaml` file in the same folder as the binary with the following variables:
+  ```
+  PORT: :<port you want to listen and serve from>
+  BOLT-PATH: 'path of the bolt database file with extension .db'
+  ```
 
 ## Author
 Kunal Kundu [@tinfoil-knight](https://github.com/tinfoil-knight)

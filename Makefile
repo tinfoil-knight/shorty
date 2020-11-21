@@ -1,10 +1,11 @@
-.PHONY: test
+.PHONY: run build format test bench cov clear
 
 run:
 	go run main.go
 
 build:
 	go build -o bin/main .
+	cp config.yaml bin
 
 format:
 	gofmt -d -e
@@ -21,5 +22,4 @@ cov:
 
 clear:
 	go clean
-	rm -rf *.db tmp
-	rm *.out
+	rm -rf *.db *.out tmp bin
