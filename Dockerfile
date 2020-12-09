@@ -1,6 +1,6 @@
 FROM golang:1.15-alpine AS builder
 WORKDIR /build
-# CGO_ENABLED: Prevent the resulting binary from being linked to any C libs.
+# CGO_ENABLED: Decides whether the resulting binary from being linked to any C libs.
 ENV CGO_ENABLED=0 \
     GO111MODULE=on \
     GOOS=linux \
