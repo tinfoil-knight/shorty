@@ -180,8 +180,24 @@ func Test__SetWebsite(t *testing.T) {
 	}
 }
 
+// TODO: Add more testcases.
 func Test__SetInvalidURL(t *testing.T) {
+	app := getApplication()
+	defer app.db.Close()
 
+	ts := runServer(app.setHandler)
+	defer ts.Close()
+
+	url := ts.URL
+
+	invalidLink := []byte("randomstring")
+	res, err := http.Post(url, "application/x-www-form-urlencoded", bytes.NewReader(invalidLink))
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	if res.StatusCode != http.StatusBadRequest {
+		t.Errorf("StatusCode | Expected: %v, Received: %v", http.StatusBadRequest, res.StatusCode)
+	}
 }
 
 func Test__GetInvalidURL(t *testing.T) {
