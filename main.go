@@ -43,7 +43,7 @@ func (app *application) redirectHandler(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
-	http.Redirect(w, r, string(url), 302)
+	http.Redirect(w, r, string(url), http.StatusFound)
 }
 
 func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +51,7 @@ func (app *application) setHandler(w http.ResponseWriter, r *http.Request) {
 		sendError(w, http.StatusMethodNotAllowed)
 		return
 	}
-	var validate *validator.Validate
-	validate = validator.New()
+	validate := validator.New()
 
 	url, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -91,23 +90,23 @@ func (app *application) findOne(key []byte) ([]byte, error) {
 		b := tx.Bucket(app.bucket)
 		val = b.Get([]byte(key))
 		if val == nil {
-			return errors.New("Not Found")
+			return errors.New("not found")
 		}
 		return nil
 	})
 	return val, err
 }
 
-func (app *application) addOne(key []byte, val []byte) error {
-	err := app.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists(app.bucket)
-		if err != nil {
-			return err
-		}
-		return b.Put(key, val)
-	})
-	return err
-}
+// func (app *application) addOne(key []byte, val []byte) error {
+// 	err := app.db.Update(func(tx *bolt.Tx) error {
+// 		b, err := tx.CreateBucketIfNotExists(app.bucket)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		return b.Put(key, val)
+// 	})
+// 	return err
+// }
 
 func (app *application) addAShortCode(url []byte) ([]byte, error) {
 	shortCode := helpers.GenerateShortString()
