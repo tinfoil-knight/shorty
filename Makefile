@@ -12,6 +12,7 @@ format:
 
 test:
 	go test -v
+	make clean
 
 bench:
 	go test -run=XXX -bench=. -benchtime 100x
@@ -20,6 +21,6 @@ cov:
 	go test -coverprofile=coverage.out
 	go tool cover -html=coverage.out
 
-clear:
+clean:
 	go clean
 	rm -rf *.db *.out tmp bin
